@@ -1,4 +1,11 @@
 const express = require('express');
+const Joi = require('joi');
+
+const schema = Joi.object({
+  name: Joi.string().min(3).max(30),
+  phone: Joi.string().pattern(/^\(\d{3}\) \d{3}-\d{4}$/),
+  email: Joi.string().email(),
+});
 
 const {
   listContacts,
@@ -36,8 +43,13 @@ router.get('/:contactId', async (req, res, next) => {
 
 router.post('/', async (req, res, next) => {
   try {
-    const { name, email, phone } = req.body;
+    const isValid = schema.validate(req.body);
+    const { name, email, phone } = isValid.value;
     const list = await listContacts();
+
+    if (isValid.error) {
+      return res.status(400).json({ message: 'Not valide query' });
+    }
 
     if (list.find(item => item.email === email || item.phone === phone)) {
       return res.status(400).json({ message: 'Such contact already exists' });
@@ -51,7 +63,7 @@ router.post('/', async (req, res, next) => {
 
     res.status(201).json({ addedContact });
   } catch (error) {
-    res.status(400).json({ message: error });
+    res.status(500).json({ message: error.message });
   }
 });
 
