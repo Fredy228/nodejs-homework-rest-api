@@ -5,6 +5,7 @@ const {
   getContactById,
   addContact,
   removeContact,
+  updateContact,
 } = require('../../models/contacts');
 
 const router = express.Router();
@@ -15,7 +16,7 @@ router.get('/', async (req, res, next) => {
 
     res.status(200).json({ list });
   } catch (error) {
-    res.status(400).json({ error });
+    res.status(400).json({ message: error });
   }
 });
 
@@ -29,7 +30,7 @@ router.get('/:contactId', async (req, res, next) => {
     }
     res.status(404).json({ message: 'Not found' });
   } catch (error) {
-    res.status(400).json({ error });
+    res.status(400).json({ message: error });
   }
 });
 
@@ -71,7 +72,24 @@ router.delete('/:contactId', async (req, res, next) => {
 });
 
 router.put('/:contactId', async (req, res, next) => {
-  res.json({ message: 'template message' });
+  try {
+    const list = await listContacts();
+    const { contactId } = req.params;
+    console.log(req.body);
+
+    if (Object.keys(req.body).length === 0) {
+      return res.status(400).json({ message: 'missing fields' });
+    }
+
+    if (list.find(item => item.id === contactId)) {
+      const contact = await updateContact(contactId, req.body);
+
+      return res.status(200).json({ contact });
+    }
+    res.status(404).json({ message: 'Not found' });
+  } catch (error) {
+    res.status(400).json({ message: error });
+  }
 });
 
 module.exports = router;
