@@ -23,7 +23,7 @@ router.get('/', async (req, res, next) => {
 
     res.status(200).json({ list });
   } catch (error) {
-    res.status(400).json({ message: error });
+    res.status(400).json({ message: error.message });
   }
 });
 
@@ -37,7 +37,7 @@ router.get('/:contactId', async (req, res, next) => {
     }
     res.status(404).json({ message: 'Not found' });
   } catch (error) {
-    res.status(400).json({ message: error });
+    res.status(400).json({ message: error.message });
   }
 });
 
@@ -79,7 +79,7 @@ router.delete('/:contactId', async (req, res, next) => {
     }
     res.status(404).json({ message: 'Not found' });
   } catch (error) {
-    res.status(400).json({ message: error });
+    res.status(400).json({ message: error.message });
   }
 });
 
@@ -100,7 +100,7 @@ router.put('/:contactId', async (req, res, next) => {
     }
     res.status(404).json({ message: 'Not found' });
   } catch (error) {
-    res.status(400).json({ message: error });
+    res.status(400).json({ message: error.message });
   }
 });
 
