@@ -10,7 +10,13 @@ const getContactById = async contactId => {
   return list.find(item => item.id === contactId);
 };
 
-const removeContact = async contactId => {};
+const removeContact = async contactId => {
+  const list = await listContacts();
+
+  const newList = await list.filter(item => item.id !== contactId);
+
+  await fs.writeFile('./models/contacts.json', JSON.stringify(newList));
+};
 
 const addContact = async (name, email, phone) => {
   const list = await listContacts();
