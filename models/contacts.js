@@ -4,7 +4,10 @@ const listContacts = async () => {
   return JSON.parse(await fs.readFile('./models/contacts.json', 'utf-8'));
 };
 
-const getContactById = async contactId => {};
+const getContactById = async contactId => {
+  const list = await listContacts();
+  return list.find(item => item.id === contactId);
+};
 
 const removeContact = async contactId => {};
 
