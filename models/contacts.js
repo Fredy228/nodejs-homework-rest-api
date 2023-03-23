@@ -1,53 +1,39 @@
-const fs = require('fs').promises;
-const uuid = require('uuid').v4;
+const Contact = require('./userModel');
 
 const listContacts = async () => {
-  return JSON.parse(await fs.readFile('./models/contacts.json', 'utf-8'));
+  return await Contact.find({});
 };
 
 const getContactById = async contactId => {
-  const list = await listContacts();
-  return list.find(item => item.id === contactId);
+  return await Contact.findById(contactId);
 };
 
 const removeContact = async contactId => {
-  const list = await listContacts();
-
-  const newList = await list.filter(item => item.id !== contactId);
-
-  await fs.writeFile('./models/contacts.json', JSON.stringify(newList));
+  return await Contact.findByIdAndDelete(contactId);
 };
 
-const addContact = async (name, email, phone) => {
-  const list = await listContacts();
-  const newContact = {
-    id: uuid(),
+const addContact = async (name, email, phone, favorite) => {
+  const newContact = await Contact.create({
     name,
     email,
     phone,
-  };
-
-  list.push(newContact);
-
-  await fs.writeFile('./models/contacts.json', JSON.stringify(list));
+    favorite,
+  });
 
   return newContact;
 };
 
-const updateContact = async (contactId, { name, email, phone }) => {
-  const list = await listContacts();
-  const index = list.findIndex(item => item.id === contactId);
-  const contact = list[index];
-
-  if (name) contact.name = name;
-  if (email) contact.email = email;
-  if (phone) contact.phone = phone;
-
-  list[index] = contact;
-
-  await fs.writeFile('./models/contacts.json', JSON.stringify(list));
-
-  return contact;
+const updateContact = async (contactId, { name, email, phone, favorite }) => {
+  return await Contact.findByIdAndUpdate(
+    contactId,
+    {
+      name,
+      email,
+      phone,
+      favorite,
+    },
+    { new: true }
+  );
 };
 
 module.exports = {
