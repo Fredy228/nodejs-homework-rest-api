@@ -1,23 +1,25 @@
 const Contact = require('./userModel');
 
-const listContacts = async () => {
-  return await Contact.find({});
+const listContacts = async owner => {
+  return await Contact.find({ owner });
 };
 
-const getContactById = async contactId => {
-  return await Contact.findById(contactId);
+const getContactById = async (contactId, owner) => {
+  // return await Contact.findById(contactId);
+  return await Contact.find({ owner, _id: contactId });
 };
 
 const removeContact = async contactId => {
   return await Contact.findByIdAndDelete(contactId);
 };
 
-const addContact = async (name, email, phone, favorite) => {
+const addContact = async (name, email, phone, favorite, owner) => {
   const newContact = await Contact.create({
     name,
     email,
     phone,
     favorite,
+    owner,
   });
 
   return newContact;

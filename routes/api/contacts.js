@@ -25,7 +25,7 @@ router.use(tokenCheck.protect);
 
 router.get('/', async (req, res, next) => {
   try {
-    const list = await listContacts();
+    const list = await listContacts(req.user._id);
 
     res.status(200).json({ list });
   } catch (error) {
@@ -36,9 +36,9 @@ router.get('/', async (req, res, next) => {
 router.get('/:contactId', async (req, res, next) => {
   try {
     const { contactId } = req.params;
-    const contact = await getContactById(contactId);
+    const contact = await getContactById(contactId, req.user._id);
 
-    if (contact) {
+    if (contact.length !== 0) {
       return res.status(200).json({ contact });
     }
     res.status(404).json({ message: 'Not found' });
@@ -51,7 +51,11 @@ router.post('/', async (req, res, next) => {
   try {
     const isValid = schema.validate(req.body);
     const { name, email, phone, favorite } = isValid.value;
-    const findContact = await Contact.find({ email, phone });
+    const findContact = await Contact.find({
+      email,
+      phone,
+      owner: req.user._id,
+    });
 
     if (isValid.error) {
       return res.status(400).json({ message: 'Not valide query' });
@@ -61,7 +65,13 @@ router.post('/', async (req, res, next) => {
       return res.status(400).json({ message: 'Such contact already exists' });
     }
 
-    const addedContact = await addContact(name, email, phone, favorite);
+    const addedContact = await addContact(
+      name,
+      email,
+      phone,
+      favorite,
+      req.user
+    );
 
     res.status(201).json({ addedContact });
   } catch (error) {
@@ -72,9 +82,14 @@ router.post('/', async (req, res, next) => {
 router.delete('/:contactId', async (req, res, next) => {
   try {
     const { contactId } = req.params;
-    const exists = await Contact.exists({ _id: contactId });
 
-    if (!exists) return res.status(404).json({ message: 'Not found' });
+    const findContact = await Contact.find({
+      _id: contactId,
+      owner: req.user._id,
+    });
+
+    if (findContact.length === 0)
+      return res.status(404).json({ message: 'Not found' });
 
     await removeContact(contactId);
 
@@ -87,10 +102,13 @@ router.delete('/:contactId', async (req, res, next) => {
 router.put('/:contactId', async (req, res, next) => {
   try {
     const { contactId } = req.params;
-    const exists = await Contact.exists({ _id: contactId });
+    const findContact = await Contact.find({
+      _id: contactId,
+      owner: req.user._id,
+    });
 
-    if (!exists) return res.status(404).json({ message: 'Not found' });
-    console.log(req.body);
+    if (findContact.length === 0)
+      return res.status(404).json({ message: 'Not found' });
 
     if (Object.keys(req.body).length === 0) {
       return res.status(400).json({ message: 'missing fields' });
@@ -107,9 +125,13 @@ router.put('/:contactId', async (req, res, next) => {
 router.patch('/:contactId/favorite', async (req, res, next) => {
   try {
     const { contactId } = req.params;
-    const exists = await Contact.exists({ _id: contactId });
+    const findContact = await Contact.find({
+      _id: contactId,
+      owner: req.user._id,
+    });
 
-    if (!exists) return res.status(404).json({ message: 'Not found' });
+    if (findContact.length === 0)
+      return res.status(404).json({ message: 'Not found' });
     const { favorite } = req.body;
 
     if (Object.keys(req.body).length === 0) {
