@@ -162,7 +162,7 @@ router.patch(
       const updatedUser = await user.save();
 
       res.status(200).json({
-        user: updatedUser,
+        avatarURL: updatedUser.avatar,
       });
     } catch (error) {
       res.status(400).json({ message: error.message });
