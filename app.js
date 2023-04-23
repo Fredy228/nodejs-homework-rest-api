@@ -25,6 +25,7 @@ mongoose
 
 app.use(logger(formatsLogger));
 app.use(cors());
+app.use(express.static('static'));
 app.use(express.json());
 
 app.use('/api/contacts', contactsRouter);
