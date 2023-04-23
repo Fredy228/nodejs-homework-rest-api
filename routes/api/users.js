@@ -5,6 +5,8 @@ const Joi = require('joi');
 
 const User = require('../../models/usersModel');
 const tokenCheck = require('../../middleware/tokenCheck');
+const userMiddlewares = require('../../middleware/userMiddleWare');
+const ImageService = require('../../services/imgService');
 
 const router = express.Router();
 
@@ -138,5 +140,34 @@ router.post('/logout', tokenCheck.protect, async (req, res, next) => {
     res.status(400).json({ message: error.message });
   }
 });
+
+router.patch(
+  '/avatars',
+  tokenCheck.protect,
+  userMiddlewares.uploadUserPhoto,
+  async (req, res, next) => {
+    try {
+      const { user, file } = req;
+
+      if (file) {
+        user.avatar = await ImageService.save(
+          file,
+          { width: 250, height: 250 },
+          'images',
+          'users',
+          user.id
+        );
+      }
+
+      const updatedUser = await user.save();
+
+      res.status(200).json({
+        avatarURL: updatedUser.avatar,
+      });
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
+);
 
 module.exports = router;
