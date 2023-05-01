@@ -31,6 +31,8 @@ exports.protect = async (req, res, next) => {
         },
       });
     }
+    if (!currentUser.verify)
+      return res.status(400).json({ message: 'You need to do verification' });
 
     req.user = currentUser;
 
