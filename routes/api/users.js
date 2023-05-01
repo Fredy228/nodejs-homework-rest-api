@@ -2,9 +2,11 @@ const express = require('express');
 
 const jwt = require('jsonwebtoken');
 const Joi = require('joi');
+const { v4: uuidv4 } = require('uuid');
 
 const User = require('../../models/usersModel');
 const tokenCheck = require('../../middleware/tokenCheck');
+const { sendEmail } = require('../../services/email');
 
 const router = express.Router();
 
@@ -14,6 +16,7 @@ const schemaUser = Joi.object({
     .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,30}$/)
     .required(),
   subscription: Joi.string().valid('starter', 'pro', 'business'),
+  verificationToken: Joi.string().required(),
 });
 
 const signToken = id =>
@@ -26,6 +29,7 @@ router.post('/register', async (req, res, next) => {
     const newUserData = {
       ...req.body,
       subscription: 'starter',
+      verificationToken: uuidv4(),
     };
 
     const isValid = schemaUser.validate(newUserData);
@@ -53,6 +57,8 @@ router.post('/register', async (req, res, next) => {
     const token = signToken(newUser.id);
     newUser.token = token;
     newUser.save();
+
+    sendEmail(newUser.email, newUser.verificationToken);
 
     res.status(200).json({
       Status: '200 OK',
@@ -137,6 +143,47 @@ router.post('/logout', tokenCheck.protect, async (req, res, next) => {
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
+});
+
+router.get('/verify/:verificationToken', async (req, res, next) => {
+  try {
+    const { verificationToken } = req.params;
+    console.log(verificationToken);
+    if (!verificationToken)
+      return res.status(400).json({ message: 'Not found verification token' });
+
+    const userFind = await User.findOne({ verificationToken });
+
+    console.log(userFind);
+
+    if (!userFind) return res.status(400).json({ message: 'User not found' });
+
+    userFind.verificationToken = 'null';
+    userFind.verify = true;
+    userFind.save();
+    console.log(userFind);
+    res.status(200).json({ message: 'Verification successful' });
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ message: 'Error...' });
+  }
+});
+
+router.post('/verify', async (req, res, next) => {
+  const { email } = req.body;
+  const userFind = await User.findOne({ email });
+
+  if (!email)
+    return res.status(400).json({ message: 'missing required field email' });
+
+  if (!userFind) return res.status(400).json({ message: 'User not found' });
+
+  if (userFind.verify)
+    return res
+      .status(400)
+      .json({ message: 'Verification has already been passed' });
+
+  sendEmail(userFind.email, userFind.verificationToken);
 });
 
 module.exports = router;
